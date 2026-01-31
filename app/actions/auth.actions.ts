@@ -122,6 +122,7 @@ export async function loginAction(prevState: any, formData: FormData) {
 
     const session = await encrypt({
       userId: user.id,
+      userName: user.name,
       role: user.roles.name.toUpperCase(),
       orgId: user.organization_id,
       orgName: user.organizations.name,
@@ -151,4 +152,10 @@ export async function loginAction(prevState: any, formData: FormData) {
   if (redirectTo) {
     redirect(redirectTo);
   }
+}
+
+export async function logoutAction() {
+  const cookieStore = await cookies();
+  cookieStore.delete("session");
+  redirect("/login");
 }
