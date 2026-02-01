@@ -1,65 +1,56 @@
 "use server";
 
+import { prisma } from "@/app/lib/prisma";
+import bcrypt from "bcryptjs";
 import { revalidatePath } from "next/cache";
-import { prisma } from "../lib/prisma";
 
-const ORG_ID = 1;
-
-export async function saveUserAction(formData: FormData) {
+export async function updateProfileAction(userId: string, formData: FormData) {
   const name = formData.get("name") as string;
-  const email = formData.get("email") as string;
-  const role_id = Number(formData.get("role_id"));
-  const password = "Password123";
+  const oldPassword = formData.get("oldPassword") as string;
+  const newPassword = formData.get("newPassword") as string;
 
   try {
-    await prisma.users.create({
-      data: {
-        name,
-        email,
-        role_id,
-        organization_id: ORG_ID,
-        password_hash: password,
-        status: "ACTIVE",
-      },
-    });
-    revalidatePath("/admin/users");
-    return { success: true };
+    const user = await prisma.users.findUnique({ where: { id: userId } });
+    if (!user) return { success: false, message: "User not found." };
+
+    const updateData: any = { name };
+
+    if (newPassword && newPassword.trim() !== "") {
+      if (!oldPassword)
+        return { success: false, message: "Current password is required." };
+
+      const isMatch = await bcrypt.compare(oldPassword, user.password_hash);
+      if (!isMatch)
+        return {
+          success: false,
+          message: "The current password you entered is incorrect.",
+        };
+
+      updateData.password_hash = await bcrypt.hash(newPassword, 10);
+    }
+
+    await prisma.users.update({ where: { id: userId }, data: updateData });
+
+    revalidatePath("/", "layout");
+    return { success: true, message: "Profile updated successfully!" };
   } catch (error) {
-    return {
-      success: false,
-      message: "Email already exists or database error.",
-    };
+    return { success: false, message: "Database update failed." };
   }
 }
 
-export async function editUserAction(formData: FormData) {
-  const id = Number(formData.get("id"));
-  const name = formData.get("name") as string;
-  const email = formData.get("email") as string;
-  const role_id = Number(formData.get("role_id"));
-  const status = formData.get("status") as any;
+export async function deleteUserAction(userId: string, currentUserId: string) {
+  if (userId === currentUserId) {
+    return {
+      success: false,
+      message: "Security Error: You cannot delete your own account.",
+    };
+  }
 
-  await prisma.users.update({
-    where: { id },
-    data: { name, email, role_id, status },
-  });
-
-  revalidatePath("/admin/users");
-  return { success: true };
-}
-
-export async function deleteUserAction(id: number) {
   try {
-    await prisma.users.delete({ where: { id } });
+    await prisma.users.delete({ where: { id: userId } });
     revalidatePath("/admin/users");
-    return { success: true };
-  } catch (error: any) {
-    if (error.code === "P2003") {
-      return {
-        success: false,
-        message: "User has active logs or bookings and cannot be deleted.",
-      };
-    }
-    return { success: false, message: "Delete failed." };
+    return { success: true, message: "User successfully removed." };
+  } catch (error) {
+    return { success: false, message: "Could not remove user." };
   }
 }
