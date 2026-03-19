@@ -4,7 +4,7 @@ generator client {
 }
 
 datasource db {
-  provider = "mysql"
+  provider = "postgresql"
 }
 
 model activity_logs {
@@ -14,12 +14,12 @@ model activity_logs {
   entity_type     String?       @db.VarChar(50)
   entity_id       Int?
   action          String?       @db.VarChar(100)
-  created_at      DateTime?     @default(now()) @db.DateTime(0)
-  organizations   organizations @relation(fields: [organization_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_logs_org")
-  users           users         @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_logs_user")
+  created_at      DateTime      @default(now())
+  organizations   organizations @relation(fields: [organization_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  users           users         @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
-  @@index([organization_id], map: "fk_logs_org")
-  @@index([user_id], map: "fk_logs_user")
+  @@index([organization_id])
+  @@index([user_id])
 }
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
@@ -28,18 +28,18 @@ model bookings {
   resource_id                       Int
   user_id                           Int
   approved_by                       Int?
-  start_datetime                    DateTime         @db.DateTime(0)
-  end_datetime                      DateTime         @db.DateTime(0)
+  start_datetime                    DateTime
+  end_datetime                      DateTime
   purpose                           String?          @db.VarChar(255)
   status                            bookings_status? @default(PENDING)
-  created_at                        DateTime?        @default(now()) @db.DateTime(0)
-  users_bookings_approved_byTousers users?           @relation("bookings_approved_byTousers", fields: [approved_by], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_booking_approver")
-  resources                         resources        @relation(fields: [resource_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_booking_resource")
-  users_bookings_user_idTousers     users            @relation("bookings_user_idTousers", fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_booking_user")
+  created_at                        DateTime         @default(now())
+  users_bookings_approved_byTousers users?           @relation("bookings_approved_byTousers", fields: [approved_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  resources                         resources        @relation(fields: [resource_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  users_bookings_user_idTousers     users            @relation("bookings_user_idTousers", fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
-  @@index([approved_by], map: "fk_booking_approver")
-  @@index([resource_id], map: "fk_booking_resource")
-  @@index([user_id], map: "fk_booking_user")
+  @@index([approved_by])
+  @@index([resource_id])
+  @@index([user_id])
 }
 
 model locations {
@@ -47,14 +47,14 @@ model locations {
   organization_id    Int
   name               String        @db.VarChar(100)
   parent_location_id Int?
-  created_at         DateTime?     @default(now()) @db.DateTime(0)
-  organizations      organizations @relation(fields: [organization_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_locations_org")
-  locations          locations?    @relation("locationsTolocations", fields: [parent_location_id], references: [id], onUpdate: NoAction, map: "fk_locations_parent")
+  created_at         DateTime      @default(now())
+  organizations      organizations @relation(fields: [organization_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  locations          locations?    @relation("locationsTolocations", fields: [parent_location_id], references: [id], onUpdate: NoAction)
   other_locations    locations[]   @relation("locationsTolocations")
   resources          resources[]
 
-  @@unique([organization_id, parent_location_id, name], map: "organization_id")
-  @@index([parent_location_id], map: "fk_locations_parent")
+  @@unique([organization_id, parent_location_id, name])
+  @@index([parent_location_id])
 }
 
 model maintenance_records {
@@ -66,12 +66,12 @@ model maintenance_records {
   completed_date   DateTime?                   @db.Date
   status           maintenance_records_status? @default(SCHEDULED)
   notes            String?                     @db.Text
-  created_at       DateTime?                   @default(now()) @db.DateTime(0)
-  resources        resources                   @relation(fields: [resource_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_maintenance_resource")
-  users            users                       @relation(fields: [reported_by], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_maintenance_user")
+  created_at       DateTime                    @default(now())
+  resources        resources                   @relation(fields: [resource_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  users            users                       @relation(fields: [reported_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
-  @@index([resource_id], map: "fk_maintenance_resource")
-  @@index([reported_by], map: "fk_maintenance_user")
+  @@index([resource_id])
+  @@index([reported_by])
 }
 
 model organizations {
@@ -79,14 +79,14 @@ model organizations {
   name                String                @db.VarChar(150)
   organization_code   String                @unique @db.VarChar(50)
   type                String                @db.VarChar(100)
-  email               String                @unique(map: "email") @db.VarChar(150)
+  email               String                @unique @db.VarChar(150)
   phone               String?               @db.VarChar(15)
   country             String?               @db.VarChar(100)
   state               String?               @db.VarChar(100)
   city                String?               @db.VarChar(100)
   address             String?               @db.Text
-  created_at          DateTime?             @default(now()) @db.DateTime(0)
-  updated_at          DateTime?             @default(now()) @db.DateTime(0)
+  created_at          DateTime              @default(now())
+  updated_at          DateTime              @default(now())
   activity_logs       activity_logs[]
   locations           locations[]
   resource_categories resource_categories[]
@@ -99,11 +99,11 @@ model resource_categories {
   organization_id Int
   name            String        @db.VarChar(100)
   description     String?       @db.Text
-  created_at      DateTime?     @default(now()) @db.DateTime(0)
-  organizations   organizations @relation(fields: [organization_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_category_org")
+  created_at      DateTime      @default(now())
+  organizations   organizations @relation(fields: [organization_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   resources       resources[]
 
-  @@unique([organization_id, name], map: "organization_id")
+  @@unique([organization_id, name])
 }
 
 model resource_features {
@@ -111,10 +111,10 @@ model resource_features {
   resource_id Int
   name        String    @db.VarChar(100)
   value       String?   @db.VarChar(255)
-  created_at  DateTime? @default(now()) @db.DateTime(0)
-  resources   resources @relation(fields: [resource_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_feature_resource")
+  created_at  DateTime  @default(now())
+  resources   resources @relation(fields: [resource_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
-  @@index([resource_id], map: "fk_feature_resource")
+  @@index([resource_id])
 }
 
 model resources {
@@ -127,24 +127,24 @@ model resources {
   capacity            Int?
   status              resources_status?     @default(AVAILABLE)
   description         String?               @db.Text
-  created_at          DateTime?             @default(now()) @db.DateTime(0)
-  updated_at          DateTime?             @default(now()) @db.DateTime(0)
+  created_at          DateTime              @default(now())
+  updated_at          DateTime              @default(now())
   bookings            bookings[]
   maintenance_records maintenance_records[]
   resource_features   resource_features[]
-  resource_categories resource_categories   @relation(fields: [category_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_resource_category")
-  locations           locations?            @relation(fields: [location_id], references: [id], onUpdate: NoAction, map: "fk_resource_location")
-  organizations       organizations         @relation(fields: [organization_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_resource_org")
+  resource_categories resource_categories   @relation(fields: [category_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  locations           locations?            @relation(fields: [location_id], references: [id], onUpdate: NoAction)
+  organizations       organizations         @relation(fields: [organization_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
-  @@index([category_id], map: "fk_resource_category")
-  @@index([location_id], map: "fk_resource_location")
-  @@index([organization_id], map: "fk_resource_org")
+  @@index([category_id])
+  @@index([location_id])
+  @@index([organization_id])
 }
 
 model roles {
-  id         Int       @id @default(autoincrement())
-  name       String    @unique(map: "name") @db.VarChar(50)
-  created_at DateTime? @default(now()) @db.DateTime(0)
+  id         Int      @id @default(autoincrement())
+  name       String   @unique @db.VarChar(50)
+  created_at DateTime @default(now())
   users      users[]
 }
 
@@ -153,20 +153,22 @@ model users {
   organization_id                      Int
   role_id                              Int
   name                                 String                @db.VarChar(100)
-  email                                String                @unique(map: "email") @db.VarChar(150)
+  email                                String                @unique @db.VarChar(150)
   password_hash                        String                @db.VarChar(255)
-  status                               users_status?         @default(ACTIVE)
-  created_at                           DateTime?             @default(now()) @db.DateTime(0)
-  updated_at                           DateTime?             @default(now()) @db.DateTime(0)
+  status                               users_status?         @default(PENDING)
+  temp_password                        String?               @db.VarChar(255)
+  must_change_password                 Boolean               @default(true)
+  created_at                           DateTime              @default(now())
+  updated_at                           DateTime              @default(now())
   activity_logs                        activity_logs[]
   bookings_bookings_approved_byTousers bookings[]            @relation("bookings_approved_byTousers")
   bookings_bookings_user_idTousers     bookings[]            @relation("bookings_user_idTousers")
   maintenance_records                  maintenance_records[]
-  organizations                        organizations         @relation(fields: [organization_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_users_org")
-  roles                                roles                 @relation(fields: [role_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_users_role")
+  organizations                        organizations         @relation(fields: [organization_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  roles                                roles                 @relation(fields: [role_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
-  @@index([organization_id], map: "fk_users_org")
-  @@index([role_id], map: "fk_users_role")
+  @@index([organization_id])
+  @@index([role_id])
 }
 
 enum maintenance_records_status {
@@ -179,6 +181,7 @@ enum maintenance_records_status {
 enum users_status {
   ACTIVE
   INACTIVE
+  PENDING
 }
 
 enum bookings_status {

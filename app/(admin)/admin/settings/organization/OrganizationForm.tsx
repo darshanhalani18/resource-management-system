@@ -47,7 +47,7 @@ export default function OrganizationForm({ organization }: any) {
       if (res.message.toLowerCase().includes("email")) {
         setErrors({ email: res.message });
       } else {
-        Alert.error(res.message);
+        Alert.error("Error", res.message || "Failed to save organization");
       }
     }
     setIsSubmitting(false);

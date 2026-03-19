@@ -10,7 +10,7 @@ export default async function MyProfilePage() {
   const session = await decrypt(token!);
 
   const user = await prisma.users.findUnique({
-    where: { id: session.userId as string },
+    where: { id: Number(session.userId) },
     include: { roles: true, organizations: true },
   });
 

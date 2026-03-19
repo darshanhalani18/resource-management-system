@@ -178,7 +178,7 @@ export default function CategoriesTable({ initialData, stats }: any) {
                           if (await Alert.confirmDelete(cat.name)) {
                             const res = await deleteCategoryAction(cat.id);
                             if (res.success) Alert.success("Deleted");
-                            else Alert.error("Error", res.message);
+                            else Alert.error("Error", res.message || "Failed to delete");
                           }
                         }}
                         className="p-2 text-slate-400 hover:text-red-500 rounded-lg transition-all"

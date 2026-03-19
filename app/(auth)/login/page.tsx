@@ -20,9 +20,9 @@ export default function LoginPage() {
   useEffect(() => {
     if (state?.data) {
       setFormData({
-        orgCode: state.data.orgCode || "",
-        email: state.data.email || "",
-        password: state.data.password || "",
+        orgCode: (state.data.orgCode as string) || "",
+        email: (state.data.email as string) || "",
+        password: (state.data.password as string) || "",
       });
       setClearedErrors({});
     }
@@ -94,7 +94,6 @@ export default function LoginPage() {
                     </label>
                     <Link
                       href="/forgot-password"
-                      size="xs"
                       className="text-[10px] font-black text-[#137fec] hover:underline uppercase"
                     >
                       Forgot?
